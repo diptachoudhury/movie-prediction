@@ -1,0 +1,37 @@
+import pandas as pd
+
+movies=pd.read_csv('C:\\Users\\DELL\\movies.csv', usecols=['movieId','title'])
+movies.head()
+
+ratings = pd.read_csv('C:\\Users\\DELL\\ratings.csv',usecols=['userId','movieId','rating'])
+ratings.head()
+
+ratings.shape
+
+
+movies_users=ratings.pivot(index='movieId',columns='userId', values='rating').fillna(0)
+movies_users.head()
+
+
+from scipy.sparse import csr_matrix
+
+mat_movies = csr_matrix(movies_users.values)
+
+
+from sklearn.neighbors import NearestNeighbors
+model = NearestNeighbors(metric = 'cosine', algorithm = 'brute', n_neighbors = 20)
+model.fit(mat_movies)
+
+
+from fuzzywuzzy import process
+
+
+def recommender(movie_name,data , n):
+    idx= process.extraction(movie_name,movies['title'])[2]
+    print('Movie Selected : movies['title'][idx],'Index :idx)
+    print('Searching for recommendation...')
+    distance , indices = model.kneighbors(data[idx],n_neighbors=n)
+    for i in indices :
+        print(movies['title'][i].where(i!=idx))
+
+recommender('toy story',mat_movies ,10)
